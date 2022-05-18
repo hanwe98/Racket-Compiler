@@ -1,0 +1,6 @@
+;#lang racket
+(let ([x (read)])
+  (let ([y (read)])
+    (+ x (+ y (let ([z (- x y)])
+                z)))))
+                

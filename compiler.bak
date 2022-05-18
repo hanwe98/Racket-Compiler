@@ -138,17 +138,17 @@
          atm]
         [(If cnd thn els)
          (If (recur cnd) (recur thn) (recur els))]
-        [(Let x e body)
-         (Let x (recur e) (recur body))]
-        [(SetBang var rhs)
-         (SetBang var (recur rhs))]
-        [(Begin es body)
-         (Begin (map recur es) (recur body))]
-        [(WhileLoop cnd body)
-         (WhileLoop (recur cnd) (recur body))]
-        [(Prim op es)
-         (Prim op (for/list ([e es]) (recur e)))]
-        [else (error "rf-exp does not handle" e)]))))
+      [(Let x e body)
+       (Let x (recur e) (recur body))]
+      [(SetBang var rhs)
+       (SetBang var (recur rhs))]
+      [(Begin es body)
+       (Begin (map recur es) (recur body))]
+      [(WhileLoop cnd body)
+       (WhileLoop (recur cnd) (recur body))]
+      [(Prim op es)
+       (Prim op (for/list ([e es]) (recur e)))]
+      [else (error "rf-exp does not handle" e)]))))
 
 
 ; limit-functions : LFunRef -> LFunRef
@@ -483,7 +483,7 @@
      #:when (atm? atm)
      (Return atm)]
     [(Apply rator rands) (TailCall rator rands)]
-    [(FunRef f) (Return (FunRef f))]
+    [(FunRef f) (FunRef f)]
     [(Allocate int type) (Return (Allocate int type))]
     [(GlobalValue var) (Return (GlobalValue var))]
     [(If cnd thn els)
@@ -580,13 +580,11 @@
          (match d
            [(Def f inputs type ls e)
             (set-box! func-name (symbol->string f))
-            ;; initialize parameters using the registers
             (define inputs^
                   (for/list ([input inputs])
                     (match input
                       [`(,arg : ,type) (Var arg)])))
             (define reg-to-param (assign-params-to-regs (take callq-param (length inputs)) inputs^))
-             
             (define e^
               (for/list ([pair e])
                 (define label (car pair))
@@ -619,6 +617,11 @@
       [(Goto label) (list (Jmp label))]
       [(IfStmt cnd (Goto thn) (Goto els))
        (match cnd
+         [(Prim 'vector-ref `(,tup ,n))
+          (list (Instr 'movq (list tup (Reg 'r11)))
+                (Instr 'cmpq (list (Deref 'r11 (* 8 (add1 (Int-value n)))) (Imm 1)))
+                (JmpIf 'e thn)
+                (Jmp els))]
          [(Prim cmp `(,atm1 ,atm2))
           (list (Instr 'cmpq (list (si-atm atm2) (si-atm atm1)))
                 (JmpIf

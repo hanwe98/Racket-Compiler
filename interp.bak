@@ -1353,7 +1353,6 @@
                             [`(function ,xs ,body ())
                              `(function ,xs ,body ,top-level)])))
            (define env^ (list (cons 'r15 (unbox rootstack_begin))))
-           #;(displayln (lookup 'main top-level))
            (define result-env (call-function (lookup 'main top-level) '() env^))
            (lookup 'rax result-env)]
           )))
@@ -1368,7 +1367,6 @@
                           runtime-config:heap-size)
            (set! root-stack-pointer (unbox rootstack_begin))
            (define top-level (for/list ([d ds]) (interp-x86-def d)))
-           
            ;; tie the knot
            (for/list ([b top-level])
              (set-mcdr! b (match (mcdr b)

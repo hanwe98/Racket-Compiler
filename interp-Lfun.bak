@@ -27,8 +27,6 @@
       (verbose "Lfun/interp-exp" e)
       (match e
         [(Var x) (unbox (dict-ref env x))]
-        [(FunRef f)
-         (unbox (lookup f env))]
         [(Let x e body)
          (define new-env (dict-set env x (box (recur e))))
          ((interp-exp new-env) body)]
